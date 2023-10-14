@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <title>TODO</title>
+    <meta charset="UTF-8">
+    <script>
+// отправляем запрос на список дел
+      async function loadTodoItems() {
+        const response = await fetch('http://localhost:3000/api/todos');//обращаемся к серверу т.к GET больше писать не нужно
+        const data = await response.json();//интрепретирруем как JSON
+        console.log(data);
+      }
+    //loadTodoItems()
+
+//создаем дело
+      async function createTodoItem() {
+        const response = await fetch('http://localhost:3000/api/todos', {
+          method: 'POST',//отпалявем запрос POST
+          headers: { 'Content-Type': 'application/json' },//пишем заголовок
+          body: JSON.stringify({//тело
+            name: 'Сходить за хлебом',
+            owner: 'Тимофей'
+          })
+        });
+        const data = await response.json();
+        console.log(data);
+      }
+      //createTodoItem()
+
+// получем список одного дела
+
+      async function getTodoItem() {
+        const response = await fetch('http://localhost:3000/api/todos/1697093101734');
+        const data = await response.json();
+        console.log(data);
+      }
+      //getTodoItem()
+
+//изменение дела частичное
+      async function markTodoAsDone() {
+        const response = await fetch('http://localhost:3000/api/todos/1697093101734', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ done: true })
+        });
+        const data = await response.json();
+        console.log(data);
+      }
+     // markTodoAsDone()
+
+//Удаление
+      async function deleteTodoItem() {
+        const response = await fetch('http://localhost:3000/api/todos/1697093101734', {
+          method: 'DELETE',
+        });
+        if (response.status === 404)
+          console.log('Не удалось удалить дело, так как его не существует');
+        const data = await response.json();
+        console.log(data);
+      }
+      deleteTodoItem()
+    </script>
+  </head>
+  <body>
+  </body>
+</html>
