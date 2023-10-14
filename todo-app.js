@@ -1,7 +1,7 @@
 (function(){
 
     let listArray = [];
-    let listName;
+    let owner;
     //создаем и возвращаем заголовок приложения
     function createAppTitle(title) {
         let appTitle =document.createElement('h2');
@@ -52,6 +52,7 @@
 
         //ф-я добавления дела (строки с кнопаками)
     function createTodoItem(obj){
+        const doneClass ='list-group-item-success'
         let item = document.createElement('li');
         //кнопки помещяаем в элемент, который красиво покажет их в одной группе
         let buttonGroup =document.createElement('div');
@@ -69,19 +70,28 @@
         deleteButton.classList.add('btn', 'btn-danger');
         deleteButton.textContent = 'Удалить';
 
-        if (obj.done==true) item.classList.add('list-group-item-success')
+        if (obj.done==true) item.classList.add(doneClass)
 
         //добавляем обработчики на кнопки
         doneButton.addEventListener('click', function(){
-            item.classList.toggle('list-group-item-success');
+            item.classList.toggle(doneClass);
             const currentId = obj.id;
             console.log('currentId',obj);
             for(let listItem of listArray){
                 if (listItem.id ==currentId) {
                     listItem.done=!listItem.done
+
+                    //server изменине списка
+                    fetch(`http://localhost:3000/api/todos/${listItem.id}`, {
+                        method: 'PATCH',
+                        body :JSON.stringify({done:listItem.done }),
+                        headers: {
+                            'Content-Type': 'application/json' ,
+                        }
+                    })
                 }
             }
-            saveList(listArray, listName);
+            saveList(listArray, owner);
         })
 
         deleteButton.addEventListener('click', function(){
@@ -90,9 +100,14 @@
 
                 const currentId =obj.id;
                 for (let i=0; i<listArray.length;i++){
-                    if(listArray[i].id==currentId) listArray.splice(i, 1)
+                    if(listArray[i].id==currentId)
+                    //server  удаление дела
+                    fetch(`http://localhost:3000/api/todos/${listArray[i].id}`, {
+                        method: 'DELETE',                       
+                    })
+                    //  listArray.splice(i, 1)
                 }
-                saveList(listArray, listName);
+                // saveList(listArray, owner);
             }
         })
 
@@ -124,7 +139,7 @@
 
         //основная функция
 
-    function createTodoApp(container, title='Список дел', keyName, defArray=[]){
+    async function createTodoApp(container, title='Список дел', keyName, defArray=[]){
 
         //let container =document.getElementById('todo-app');
         
@@ -132,17 +147,22 @@
         let todoItemForm = createTodoItemForm();
         let todoList= crateTodoList();
         
-        listName=keyName;
+        owner=keyName;
         listArray=defArray;
         console.log(listArray)
     
             container.append(todoAppTitle);
             container.append(todoItemForm.form);
             container.append(todoList);
+        //server запрос дела с сервера
+            const response = await fetch(`http://localhost:3000/api/todos?owner=${keyName}`);
 
-            let localData = localStorage.getItem(listName);
-                if(localData!==null & localData!=='') {
-                    listArray=JSON.parse(localData);
+
+            const serverData = await response.json();
+            console.log(serverData)
+
+                if(serverData!==null & serverData!=='') {
+                     listArray=serverData;
                 }
                 console.log(listArray)
                 for (let itemList of listArray){
@@ -151,7 +171,7 @@
                 }
             
             //браузер создает событие submit  на форме по нажатию на  Enter или на кнопку создания дела
-            todoItemForm.form.addEventListener('submit', function(e){
+            todoItemForm.form.addEventListener('submit', async function(e){ //server добавдляем async иначе не убдет работать
                 //эта строчка необходима , чтобы предотвраитиьт страндартное действие браузера
                 //в данном случае мы не хотим, чтобы страница перезагружаласть при отправке формы
                 e.preventDefault();
@@ -161,19 +181,35 @@
                 if (!todoItemForm.input.value){
                     return;
                 }
+                //server создание дела необходимо поместить в код обработчика события формы до того как оно будет созадно но после проверки
+                
+                const response = await fetch('http://localhost:3000/api/todos', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: todoItemForm.input.value.trim(), //name  из поля для ввода
+                        owner,
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                //server получаем тело ответа
+                const todoItem=await response.json();
+
                 let newItem ={
                                 id:getNewId(listArray),
                                 name: todoItemForm.input.value,
                                 done: false,
                             }
                 //создаем и добавляем в список новое делос название из поля для ввода
-                let todoItem =createTodoItem(newItem);
+                let todoItemElement =createTodoItem(todoItem);
 
-                listArray.push(newItem)
+                listArray.push(todoItem)
 
-                saveList(listArray, listName);
+                saveList(listArray, owner);
                 //создаем и добавлем в список новео дело с названием из поля для ввода
-                todoList.append(todoItem.item);
+                todoList.append(todoItemElement.item);
                 //обнуляем значение в поле, чтобы не пришлось стирать его вручную
                 todoItemForm.button.disabled=true;
                 todoItemForm.input.value ='';
