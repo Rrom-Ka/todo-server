@@ -1,8 +1,5 @@
 # 📝 Fullstack TODO App
 
-![Node.js](https://img.shields.io)
-![JavaScript](https://img.shields.io)
-![Bootstrap](https://img.shields.io)
 
 Простое и функциональное приложение для управления списками дел с разделением по владельцам. Проект включает в себя серверную часть на чистом **Node.js** и клиентскую часть на **Vanilla JS**.
 
@@ -42,5 +39,5 @@
 
 1. **Клонируйте репозиторий:**
    ```bash
-   git clone https://github.com
+   git clone https://github.com/Rrom-Ka/todo-server.git
    cd todo-server
